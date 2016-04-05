@@ -1,0 +1,154 @@
+1. Is your browser running HTTP version 1.0 or 1.1? What version of HTTP is the server running? 
+
+Answer:
+Request Version: HTTP/1.1
+This information is found in the details of selected packet (GET) in the header
+
+And in the expert info for the response we found following information:
+Message: HTTP/1.1 200 OK\r\n
+so it is running 1.1 too
+
+2.What languages (if any) does your browser indicate that it can accept to the server? In the captured session, what other information (if any) does the browser provide the server with regarding the user/browser?
+
+Answer:
+
+it indicates that it accepts american english 
+Accept-Language: en-us, en;q=0.50\r\n
+
+it also gives information about what browser and OS the user agent is using. 
+which is mozilla and windows. It also gives information about what charset it accepts, UTF-8 and ISO-8859-1
+
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.0.2) Gecko/20021120 Netscape/7.01\r\n
+Accept-Charset: ISO-8859-1, utf-8;q=0.66, *;q=0.66\r\n
+
+3.What is the IP address of your computer? Of the gaia.cs.umass.edu server? 
+
+Answer:
+IP address of my computer is 192.168.1.102 which is stated under source
+and server is stated under destination which is 128.119.245.12
+
+4.What is the status code returned from the server to your browser? 
+
+Answer:
+200
+
+stated in the details
+Status Code: 200
+
+5.When was the HTML file that you are retrieving last modified at the server? 
+
+Asnwer:
+Last-Modified: Tue, 23 Sep 2003 05:29:00 GMT\r\n
+this is stated in the details of the response
+
+6.How many bytes of content are being returned to your browser? 
+
+Answer:
+73
+Content-Length: 73\r\n
+stated in the details of response
+
+7.By inspecting the raw data in the "packet bytes" pane, do you see any http headers within the data that are not displayed in the "packet details" pane? If so, name one.
+
+Answer: we compared asscii and made sure that all text is available in the details too. So answer is NO.
+
+TASK A (paragraph 1-7)
+What we can see is that the fields are for example good for the server to see what the user is using, browser, OS and what different languages etc it can accept. The status code is really good for the client to know wether everything went good or if something went bad, then it can see dependant on status code what went wrong. The versions of HTTP are also in the headers and tell us for example if we can use persistent connection etc. 
+
+
+8.Inspect the contents of the first HTTP GET request from your browser to the server. Do you see an “IF-MODIFIED-SINCE” line in the HTTP GET?
+
+In the first get request we have no if modified since because its our first request to that page.
+
+
+9.Inspect the contents of the server response. Did the server explicitly return the contents of the file? How can you tell?
+
+the first response explicitly returns the contents of the file and this can be shown by the contents and the status code 200.
+
+
+
+10.Now inspect the contents of the second HTTP GET request from your browser to the server. Do you see an “IF-MODIFIED-SINCE:” line in the HTTP GET? If so, what information follows the “IF-MODIFIED-SINCE:” header?
+
+Answer:
+Yes.
+If-Modified-Since: Tue, 23 Sep 2003 05:35:00 GMT\r\n
+This information is found in the details of the second GET message
+
+The information that follows are the date and time of when our newest copy of the file was last modified. This is the same date and time of the first response message "last-modified" 
+
+11.What is the HTTP status code and phrase returned from the server in response to this second HTTP GET? Did the server explicitly return the contents of the file? Explain.
+
+The second response sends the status code 304 "not modified" so that time it dosent send back the file requested but implicitly says that you can use your old one.
+
+Task B
+
+What we observe is that when using a if-modified-since (conditional get) we save resources by not always sending unneccessary data over links when we have the correct file in cache. In this way we save bandwidht by not sending entire file and server can faster handle other request.
+
+This is how proxies work with conditional gets. A proxy will look if it have the file and use a conditional GET to get a updated version from the server or get a 304 if it already have a correct version in its cache, then it answers the client directly from the proxy.
+
+12. How many HTTP GET request messages were sent by your browser?
+Answer:
+only 1 request was sent by the browser.
+can be seend in the listing of captured packets.
+
+13. How many data-containing TCP segments were needed to carry the single HTTP response?
+
+Answer:
+4 TCP segments. since the last one (HTTP) is also containing data. It was a TCP segment before it was (together with other tcp segments) made into HTTP at the client.
+
+14.What is the status code and phrase associated with the response to the HTTP GET request?
+
+Answer:
+status code is 200 and phrase is OK, 
+This information can be found in details.
+
+15.Is there any HTTP header information in the transmitted data, associated with TCP segmentation? For this question you may want to think about at what layer each protocol operates, and how the protocols at the different layers interoperate.
+
+Answer:
+No there is not. The HTTP header dosen't say anything about TCP segmentation because it dosent even know that it is going to be split up into different segments. This is decided in the Transport layer.
+
+TASK C
+
+what we can observe is that if we do a request to a server and there is much data to be sent, the application layer dosen't need to "care" about this. This is done in the transport layer and TCP splits it into appropriate sizes (number of packets) (server side). Then at the client side transport layer puts it together before sending it up to the application layer. Since the network stack is layered based the different layers are not so aware of each other so the application layer was unaware of the split.
+
+16.How many HTTP GET request messages were sent by your browser? To which Internet addresses were these GET requests sent?
+
+Answer: 
+
+3 GET requests
+
+page
+IP: 128.119.245.12
+Host: gaia.cs.umass.edu\r\n
+
+gif
+IP: 165.193.123.218
+Host: www.aw-bc.com\r\n
+
+jpg
+IP: 134.241.6.82
+Host: manic.cs.umass.edu\r\n
+
+17.Can you tell whether your browser downloaded the two images serially, or whether they were downloaded from the two web sites in parallel? Explain.
+
+Yes!, it is done in parallel and this can be seen by the fact that 2 GET requests are made before we get a response for the first get request
+
+TASK D.
+
+What we observe is that we have to get the html page file before we can even make GET requests for embedded objects because it is in the file itself we actually notice that there are embedded files. And if these are on different servers we can open several TCP connections and do GET request in parallel. If the embedded objects are on the same server we can eventually use persistent pipelined connection if this is supported.
+
+20. What does the "Connection: close" and "Connection: Keep-alive" header field imply in HTTP protocol? When should one be used over the other?
+
+The connection:keep-alive indicates that it is OK to keep the connection open to ask for more objects.
+
+connection close means that the connection will be closed after completion of the response.
+
+we should choose the keep alive when client knows it is going to do several request to the server and the handshake is expensive, otherwise choose the closed one.
+
+TASK E:
+so the keep alive message will make sure that the connection is not dropped but kept open and some advantages is that we use lower CPU and memory since we have fewer connections open simeltaneosly. Disadvantages of keeping connection open is that when all the data is received and client is not closing the connection then the resources that are needed to keep connection open are wasted.
+
+For the next assignment we are going to build a proxy and between proxy and client it is usually better to not use keep alive since the handshake dosent cost much. This is due to the fact that they are usually clsoe to each other. The same goes with a reverse proxy and the server. The handshake don't cost much.
+
+
+
