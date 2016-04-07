@@ -1,6 +1,6 @@
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.Socket;
+import java.util.logging.Level;
 
 /**
  * Names George Yildiz, Fredrik Wallström
@@ -18,29 +18,28 @@ public class ServerProxy implements Runnable{
 
     @Override
     public void run() {
-        StringBuilder sb = null;
-        String subString;
-        int character;
+        StringBuilder sb = new StringBuilder();
+        BufferedReader br;
+        String stringLine;
         try {
-            InputStream is = socket.getInputStream();
-            while((character = is.read()) != -1){
-                sb.append(character);
-                if(sb.length() >=4){
-                    //see if it is end of request
-                    subString = sb.substring(sb.length()-4, sb.length());
-                    if(subString.equals("\r\n\r\n")){
-                        client.makeRequest(sb.toString());
-                        sb = null;
-                    }
+            br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            while((stringLine = br.readLine()) != null){
+                sb.append(stringLine);
+                sb.append("\r\n");
+                //see if it is end of request
+                if(stringLine.isEmpty()){
+                    PortListener.LOGGER.log(Level.INFO, "This request is made = " + sb.toString());
+                    //send request to client and let client talk to Webserver
+                    client.makeRequest(sb.toString());
+                    //prepare for new request
+                    sb.setLength(0);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
     public boolean checkURL(String request){
-
         return true;
     }
 
