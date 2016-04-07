@@ -29,10 +29,8 @@ public class PortListener {
             LOGGER.log( Level.INFO, "listening to port number = " + port);
             while(true){
                 // waits for TCP connection
-
                 Socket socket = listener.accept();
                 new Thread(new ServerProxy(socket)).start();
-
             }
         }catch (IOException e) {
             e.printStackTrace();
