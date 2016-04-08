@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.logging.Level;
 
 /**
@@ -19,19 +20,33 @@ public class ServerProxy implements Runnable{
     @Override
     public void run() {
         StringBuilder sb = new StringBuilder();
-        BufferedReader br;
+        boolean connectionClosed = false;
+
         String stringLine;
-        try {
-            br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            while((stringLine = br.readLine()) != null){
+        try (BufferedReader buffReader = new BufferedReader(new InputStreamReader(socket.getInputStream()))){
+            while((stringLine = buffReader.readLine()) != null){
                 sb.append(stringLine);
                 sb.append("\r\n");
                 //see if it is end of request
                 if(stringLine.isEmpty()){
-                    PortListener.LOGGER.log(Level.INFO, "This request is made = " + sb.toString());
+
+
+                    // check if the connection is closed or not
+                    if(sb.toString().toLowerCase().contains("connection: close")){
+                        connectionClosed = true;
+                    }
+
                     //send request to client and let client talk to Webserver
-                    client.makeRequest(sb.toString());
-                    //prepare for new request
+                    PortListener.LOGGER.log(Level.INFO, "This request is made = " + sb.toString());
+                    ArrayList<byte[]> httpResponse = client.makeRequest(sb.toString());
+
+                    // response to client
+                    OutputStream os = socket.getOutputStream();
+                    PortListener.LOGGER.log(Level.INFO, "This response is made = " + httpResponse.toString());
+                    for(byte[] br : httpResponse) {
+                        os.write(br);
+                    }
+                    os.flush();
                     sb.setLength(0);
                 }
             }
@@ -39,6 +54,28 @@ public class ServerProxy implements Runnable{
             e.printStackTrace();
         }
     }
+
+    /*
+    change header back to connection: keep alive
+     */
+    private String formatHeader(String httpResponse, boolean connectionClosed) {
+        int startIndex;
+        int endIndex = -1;
+        if(!connectionClosed){
+            startIndex = httpResponse.indexOf("Connection: ");
+            for (int i = startIndex; i < httpResponse.length(); i++) {
+                String s = httpResponse.substring(i, i + 2);
+                if (s.equals("\r\n")) {
+                    endIndex = i;
+                    break;
+                }
+            }
+            httpResponse = httpResponse.replaceFirst(httpResponse.substring(startIndex, endIndex), "Connection: keep-alive");
+        }
+        return httpResponse;
+    }
+
+
     public boolean checkURL(String request){
         return true;
     }

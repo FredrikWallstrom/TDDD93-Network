@@ -33,8 +33,6 @@ public class ServerProxyTest {
         sleep(5000);
     }
 
-
-
   /*  @org.junit.Test
     public void testCheckURL() throws Exception {
 

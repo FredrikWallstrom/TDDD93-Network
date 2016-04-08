@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.logging.Level;
 
@@ -10,80 +12,77 @@ import java.util.logging.Level;
  */
 public class ClientProxy {
 
+    private String hostname = "";
     public ClientProxy() {
 
     }
 
-    public String makeRequest(String request) throws IOException {
-        String host = getHost(request);
-        System.out.println("hej" + " " + host);
-        Socket socket = new Socket(host, 80);
-        BufferedWriter bw;
-        bw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        bw.write(request);
-        bw.flush();
-
-        // wait for data
+    public ArrayList<byte[]> makeRequest(String request) {
+        byte br[] = new byte[256];
+        ArrayList<byte[]> byteArray = new ArrayList<byte[]>();
+        String httpRequest = reformatHeader(request);
+        InputStream is;
+        int readBytes;
 
 
+      //send request to webserver
+        try (Socket socket = new Socket(hostname, 80)){
+            BufferedWriter bw;
+            bw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            bw.write(httpRequest);
+            bw.flush();
 
-        BufferedReader br;
-        String stringLine;
-        try {
-            br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            while((stringLine = br.readLine()) != null){
-                System.out.println(stringLine);
+            // wait for data
+            is = socket.getInputStream();
+            readBytes = is.read(br, 0, 256);
+            while(readBytes != -1){
+                byte tmp[] = new byte[readBytes];
+                System.arraycopy(br, 0, tmp, 0, readBytes);
+                byteArray.add(tmp);
+                readBytes = is.read(br, 0, 256);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return "";
+        return byteArray;
     }
 
-    public String reformatHeader(String request){
+    public String reformatHeader(String request) {
         int endIndex = 0;
         int startIndex = request.indexOf(" ") + 1;
-        int startOfHost = request.indexOf("//")+2;
-        String host;
+        int startOfHost = request.indexOf("//") + 2;
 
-        for (int i = startOfHost ; i < request.length() ; i++) {
-            if (request.charAt(i) == '/'){
+        for (int i = startOfHost; i < request.length(); i++) {
+            if (request.charAt(i) == '/') {
                 endIndex = i;
                 break;
             }
         }
-
-        host = request.substring(startOfHost, endIndex);
-
-        request = request.replaceAll(request.substring(startIndex, endIndex), "");
-        request = request.substring(0,request.length()-2);
-
-
-        request = request + "Host: " + host + "\r\n\r\n";
-        System.out.println("<" + request + ">");
-
-     return "";
-    }
-
-    public String getHost(String request){
-        int startIndex = 0;
-        int endIndex = 0;
-        for (int i=0; i < request.length(); i++)
-        {
-            String s = request.substring(i,i+2);
-            if (s.equals("//")){
-                startIndex = i+2;
-                break;
-            }
+        hostname = request.substring(startOfHost, endIndex);
+        request = request.replaceFirst(request.substring(startIndex, endIndex), "");
+        // add separate hostfield if it is not already in the header
+        if (!(request.contains("Host:"))) {
+            request = request.substring(0, request.length() - 2);
+            request = request + "Host: " + hostname + "\r\n\r\n";
         }
-        for (int i = startIndex ; i < request.length() ; i++) {
-            if (request.charAt(i) == '/'){
-                endIndex = i;
-                break;
+        //change/add connection : close to header
+        if (request.contains("Connection: ")) {
+            startIndex = request.indexOf("Connection: ");
+            for (int i = startIndex; i < request.length(); i++) {
+                String s = request.substring(i, i + 2);
+                if (s.equals("\r\n")) {
+                    endIndex = i;
+                    break;
+                }
             }
+            request = request.replaceFirst(request.substring(startIndex, endIndex), "Connection: close");
+            //add connection header if it is not explicitly there
+        }else{
+            request = request.substring(0, request.length() - 2);
+            request = request + "Connection: close" + "\r\n\r\n";
+        }
+          return request;
         }
 
-        return request.substring(startIndex, endIndex);
-    }
 }

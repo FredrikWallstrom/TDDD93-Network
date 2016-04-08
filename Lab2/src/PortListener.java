@@ -12,17 +12,19 @@ import java.util.logging.Logger;
 public class PortListener implements Runnable{
     public final static Logger LOGGER = Logger.getLogger("myLogger");
     private static PortListener INSTANCE = null;
-
     private static int port = 8080;
 
     private PortListener(){
+
     }
 
     public static void main(String[] args) {
+
         if (args.length >0) {
             port = Integer.parseInt(args[0]);
         }
-        new Thread(INSTANCE).start();
+
+        new Thread(getInstance()).start();
     }
 
 
