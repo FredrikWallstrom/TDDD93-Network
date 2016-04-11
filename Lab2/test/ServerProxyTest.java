@@ -2,8 +2,6 @@ import javax.xml.bind.Marshaller;
 
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.Socket;
 
 import static java.lang.Thread.sleep;
@@ -21,16 +19,16 @@ public class ServerProxyTest {
 
     @org.junit.After
     public void tearDown() throws Exception {
-        bw.close();
-        s.close();
+        //bw.close();
+        //s.close();
     }
 
     @org.junit.Test
     public void testRun() throws Exception {
         bw = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
-        bw.write("GET /google.com HTTP/1.1\r\n\r\n");
+        bw.write("GET http://www.bbc.com/ HTTP/1.1\r\n\r\n");
         bw.flush();
-        sleep(5000);
+        sleep(10000);
     }
 
   /*  @org.junit.Test

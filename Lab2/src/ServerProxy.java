@@ -11,6 +11,7 @@ import java.util.logging.Level;
 public class ServerProxy implements Runnable{
     private Socket socket;
     private ClientProxy client;
+    String badURL = "http://www.ida.liu.se/~TDTS04/labs/2011/ass2/error1.html";
 
     public ServerProxy(Socket socket) {
         this.socket = socket;
@@ -24,15 +25,30 @@ public class ServerProxy implements Runnable{
 
         String stringLine;
         try (BufferedReader buffReader = new BufferedReader(new InputStreamReader(socket.getInputStream()))){
-            while((stringLine = buffReader.readLine()) != null){
+            while((stringLine = buffReader.readLine()) != null) {
                 sb.append(stringLine);
                 sb.append("\r\n");
                 //see if it is end of request
-                if(stringLine.isEmpty()){
+                if (stringLine.isEmpty()) {
+
+                    if (!Filtering.isStringValid(sb.toString())) {
+                        int startIndex = sb.toString().indexOf(" ") + 1;
+
+                        // change current url to the redirected one
+                        for (int i = startIndex; i < sb.toString().length(); i++) {
+                            if (sb.toString().charAt(i) == ' ') {
+                                String tmp = sb.toString();
+                                tmp = tmp.replaceFirst(tmp.substring(startIndex, i), badURL);
+                                sb.setLength(0);
+                                sb.append(tmp);
+                                break;
+                            }
+                        }
+                    }
 
 
                     // check if the connection is closed or not
-                    if(sb.toString().toLowerCase().contains("connection: close")){
+                    if (sb.toString().toLowerCase().contains("connection: close")) {
                         connectionClosed = true;
                     }
 
@@ -43,12 +59,13 @@ public class ServerProxy implements Runnable{
                     // response to client
                     OutputStream os = socket.getOutputStream();
                     PortListener.LOGGER.log(Level.INFO, "This response is made = " + httpResponse.toString());
-                    for(byte[] br : httpResponse) {
+                    for (byte[] br : httpResponse) {
                         os.write(br);
                     }
                     os.flush();
                     sb.setLength(0);
                 }
+
             }
         } catch (IOException e) {
             e.printStackTrace();

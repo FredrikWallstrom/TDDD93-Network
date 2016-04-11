@@ -7,9 +7,17 @@ import java.lang.reflect.Array;
  */
 public class Filtering {
 
-    private static final String words[] = {"gfds", "gfdsgsd2"};
+    private static final String words[] = {"spongebob", "britney spears", "paris hilton", "norrk??ping"};
+
+    public Filtering() {
+    }
 
     public static boolean isStringValid(String string){
+        for (int i = 0; i < words.length; i++) {
+            if(string.toLowerCase().contains(words[i])) {
+                return false;
+            }
+        }
         return true;
     }
 }

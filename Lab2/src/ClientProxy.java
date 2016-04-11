@@ -61,11 +61,25 @@ public class ClientProxy {
         }
         hostname = request.substring(startOfHost, endIndex);
         request = request.replaceFirst(request.substring(startIndex, endIndex), "");
+
         // add separate hostfield if it is not already in the header
-        if (!(request.contains("Host:"))) {
+        if (request.contains("Host: ")) {
+            startIndex = request.indexOf("Host: ");
+            for (int i = startIndex; i < request.length(); i++) {
+                String s = request.substring(i, i + 2);
+                if (s.equals("\r\n")) {
+                    endIndex = i;
+                    break;
+                }
+            }
+            request = request.replaceFirst(request.substring(startIndex, endIndex), "Host: " + hostname);
+
+        } else{
             request = request.substring(0, request.length() - 2);
             request = request + "Host: " + hostname + "\r\n\r\n";
         }
+
+
         //change/add connection : close to header
         if (request.contains("Connection: ")) {
             startIndex = request.indexOf("Connection: ");
@@ -84,5 +98,4 @@ public class ClientProxy {
         }
           return request;
         }
-
 }
