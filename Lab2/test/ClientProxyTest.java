@@ -2,6 +2,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 import static org.junit.Assert.*;
@@ -45,7 +46,7 @@ public class ClientProxyTest {
                 sb.append(new String(br));
             }
             s = sb.toString();
-            //System.out.println(s);
+            System.out.println(s);
             s = s.substring(0, s.indexOf("\r\n"));
 
             assert s.equals("HTTP/1.1 200 OK");
@@ -58,10 +59,37 @@ public class ClientProxyTest {
         clientProxy = new ClientProxy();
         for (int i = 0; i < requests.length; i++) {
             String s = clientProxy.reformatHeader(requests[i]);
-            System.out.println(s);
+            //System.out.println(s);
             assert s.equals(answers[i]);
 
         }
     }
+/*
+    @Test
+    public void testIsContentValid() throws Exception {
+        ClientProxy client = new ClientProxy();
+        String s = "HTTP/1.1 200 OK\n" +
+                "x-amz-id-2: YY59vD+Sq9Bi0UfO5t/1pRfDyKti4+dKyeADu7sGjaz7wIEGhR4gml9MlsLT5NGYYkUTP6v8i8g=\n" +
+                "x-amz-request-id: 478FC44DE9D130F2\n" +
+                "Content-Encoding: gzip\n" +
+                "Last-Modified: Fri, 04 Mar 2016 11:55:43 GMT\n" +
+                "ETag: \"bf0a6b8af58c760f0c9b6af97ab76d94\"\n" +
+                "Accept-Ranges: bytes\n" +
+                "Content-Type: text/javascript\n" +
+                "Content-Length: 65936\n" +
+                "Server: AmazonS3\n" +
+                "Date: Mon, 11 Apr 2016 14:29:14 GMT\n" +
+                "Connection: close\n" +
+                "Vary: Accept-Encoding\n" +
+                "\n" +
+                "fjdkasflas";
+        byte br[] = s.getBytes();
+        ArrayList<byte[]> byteArray = new ArrayList<>();
+        byteArray.add(br);
+        boolean res = client.isContentValid(byteArray);
+        System.out.println(res);
 
+
+    }
+    */
 }

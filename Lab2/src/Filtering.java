@@ -7,7 +7,7 @@ import java.lang.reflect.Array;
  */
 public class Filtering {
 
-    private static final String words[] = {"spongebob", "britney spears", "paris hilton", "norrk??ping"};
+    private static final String words[] = {"spongebob", "britney spears", "paris hilton", "norrkoping"};
 
     public Filtering() {
     }

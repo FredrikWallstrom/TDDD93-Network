@@ -21,7 +21,7 @@ public class ServerProxy implements Runnable{
     @Override
     public void run() {
         StringBuilder sb = new StringBuilder();
-        boolean connectionClosed = false;
+
 
         String stringLine;
         try (BufferedReader buffReader = new BufferedReader(new InputStreamReader(socket.getInputStream()))){
@@ -30,42 +30,41 @@ public class ServerProxy implements Runnable{
                 sb.append("\r\n");
                 //see if it is end of request
                 if (stringLine.isEmpty()) {
+                    ArrayList<byte[]> httpResponse = new ArrayList<>();
 
-                    if (!Filtering.isStringValid(sb.toString())) {
-                        int startIndex = sb.toString().indexOf(" ") + 1;
+                    //PortListener.LOGGER.log(Level.INFO, "This request is made = " + sb.toString());
+                    if (!Filtering.isStringValid(getURL(sb.toString()))) {
+                        String redirect = "HTTP/1.1 302 Found\r\n" +
+                                "Location: http://www.ida.liu.se/~TDTS04/labs/2011/ass2/error1.html\r\n\r\n\r\n";
+                        byte br[] = redirect.getBytes();
+                        httpResponse.add(br);
 
-                        // change current url to the redirected one
-                        for (int i = startIndex; i < sb.toString().length(); i++) {
-                            if (sb.toString().charAt(i) == ' ') {
-                                String tmp = sb.toString();
-                                tmp = tmp.replaceFirst(tmp.substring(startIndex, i), badURL);
-                                sb.setLength(0);
-                                sb.append(tmp);
-                                break;
-                            }
+                    }else {
+                        // check if the connection is closed or not
+                        boolean connectionClosed = false;
+                        if (sb.toString().toLowerCase().contains("connection: close")) {
+                            connectionClosed = true;
                         }
+                        //send request to client and let client talk to Webserver
+                        httpResponse = client.makeRequest(sb.toString());
+                        ArrayList<byte[]> tmp = new ArrayList<>();
+                        for (byte[] br : httpResponse){
+                            tmp.add(br);
+                        }
+
+                        httpResponse.clear();
+                        httpResponse = formatHeader(tmp, connectionClosed);
+
                     }
-
-
-                    // check if the connection is closed or not
-                    if (sb.toString().toLowerCase().contains("connection: close")) {
-                        connectionClosed = true;
-                    }
-
-                    //send request to client and let client talk to Webserver
-                    PortListener.LOGGER.log(Level.INFO, "This request is made = " + sb.toString());
-                    ArrayList<byte[]> httpResponse = client.makeRequest(sb.toString());
-
                     // response to client
                     OutputStream os = socket.getOutputStream();
-                    PortListener.LOGGER.log(Level.INFO, "This response is made = " + httpResponse.toString());
+                    //PortListener.LOGGER.log(Level.INFO, "This response is made = " + httpResponse.toString());
                     for (byte[] br : httpResponse) {
                         os.write(br);
                     }
                     os.flush();
                     sb.setLength(0);
                 }
-
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -75,26 +74,44 @@ public class ServerProxy implements Runnable{
     /*
     change header back to connection: keep alive
      */
-    private String formatHeader(String httpResponse, boolean connectionClosed) {
+    private ArrayList<byte[]> formatHeader(ArrayList<byte[]> httpResponse, boolean connectionClosed) throws UnsupportedEncodingException {
         int startIndex;
         int endIndex = -1;
         if(!connectionClosed){
-            startIndex = httpResponse.indexOf("Connection: ");
-            for (int i = startIndex; i < httpResponse.length(); i++) {
-                String s = httpResponse.substring(i, i + 2);
-                if (s.equals("\r\n")) {
+
+            StringBuilder sb = new StringBuilder();
+            for (byte[] br : httpResponse) {
+                sb.append(new String(br, "ISO-8859-1"));
+            }
+            String s = sb.toString();
+            startIndex = s.indexOf("Connection: ");
+            System.out.println("startIndex = " + startIndex);
+            for (int i = startIndex; i < s.length(); i++) {
+                String tmpString = s.substring(i, i + 1);
+                if (tmpString.equals("\n")) {
                     endIndex = i;
                     break;
                 }
             }
-            httpResponse = httpResponse.replaceFirst(httpResponse.substring(startIndex, endIndex), "Connection: keep-alive");
+
+            s = s.replaceFirst((s.substring(startIndex, endIndex)), "Connection: keep-alive");
+            byte br[] = s.getBytes("ISO-8859-1");
+            httpResponse.clear();
+            httpResponse.add(br);
         }
         return httpResponse;
     }
 
-
-    public boolean checkURL(String request){
-        return true;
+    private String getURL(String request){
+        int startIndex = request.indexOf(" ") + 1;
+        String url = "";
+        for (int i = startIndex; i < request.length(); i++) {
+            if (request.charAt(i) == ' ') {
+                url = request.substring(startIndex, i);
+                break;
+            }
+        }
+        return url;
     }
 
 

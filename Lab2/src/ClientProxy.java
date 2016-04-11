@@ -14,16 +14,15 @@ public class ClientProxy {
 
     private String hostname = "";
     public ClientProxy() {
-
     }
 
     public ArrayList<byte[]> makeRequest(String request) {
         byte br[] = new byte[256];
-        ArrayList<byte[]> byteArray = new ArrayList<byte[]>();
+        ArrayList<byte[]> byteArray = new ArrayList<>();
         String httpRequest = reformatHeader(request);
         InputStream is;
         int readBytes;
-
+        boolean isText = setContentType(request);
 
       //send request to webserver
         try (Socket socket = new Socket(hostname, 80)){
@@ -44,8 +43,39 @@ public class ClientProxy {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        if(isText){
+            if(!isContentValid(byteArray)){
+                byteArray  = newResponse(byteArray);
+            }
+        }
         return byteArray;
+    }
+
+    private ArrayList<byte[]> newResponse(ArrayList<byte[]> byteArray) {
+
+        String redirect = "HTTP/1.1 302 Found\r\n" +
+                "Location: http://www.ida.liu.se/~TDTS04/labs/2011/ass2/error2.html\r\n\r\n\r\n";
+        byte br[] = redirect.getBytes();
+        byteArray.clear();
+        byteArray.add(br);
+        return byteArray;
+    }
+
+
+    private boolean setContentType(String request) {
+        int startIndex = request.indexOf("Accept: ")+8;
+        int endIndex = 0;
+            for (int i = startIndex; i < request.length(); i++) {
+                String s = request.substring(i, i + 2);
+                if (s.equals("\r\n")) {
+                    endIndex = i;
+                    break;
+                }
+            }
+        if((request.substring(startIndex, endIndex)).contains("text")){
+            return true;
+        }
+        return false;
     }
 
     public String reformatHeader(String request) {
@@ -63,22 +93,10 @@ public class ClientProxy {
         request = request.replaceFirst(request.substring(startIndex, endIndex), "");
 
         // add separate hostfield if it is not already in the header
-        if (request.contains("Host: ")) {
-            startIndex = request.indexOf("Host: ");
-            for (int i = startIndex; i < request.length(); i++) {
-                String s = request.substring(i, i + 2);
-                if (s.equals("\r\n")) {
-                    endIndex = i;
-                    break;
-                }
-            }
-            request = request.replaceFirst(request.substring(startIndex, endIndex), "Host: " + hostname);
-
-        } else{
+        if (!(request.contains("Host: "))) {
             request = request.substring(0, request.length() - 2);
             request = request + "Host: " + hostname + "\r\n\r\n";
         }
-
 
         //change/add connection : close to header
         if (request.contains("Connection: ")) {
@@ -92,10 +110,23 @@ public class ClientProxy {
             }
             request = request.replaceFirst(request.substring(startIndex, endIndex), "Connection: close");
             //add connection header if it is not explicitly there
-        }else{
+        } else {
             request = request.substring(0, request.length() - 2);
             request = request + "Connection: close" + "\r\n\r\n";
         }
-          return request;
+        return request;
+    }
+
+    public boolean isContentValid(ArrayList<byte[]> byteArray){
+        StringBuilder sb = new StringBuilder();
+        for (byte[] br : byteArray){
+            sb.append(new String(br));
         }
-}
+        String s = sb.toString();
+        //TODO decide if we should go through all or just content
+//        s = s.substring(s.indexOf("\r\n\r\n"));;
+        return Filtering.isStringValid(s);
+        }
+
+    }
+
