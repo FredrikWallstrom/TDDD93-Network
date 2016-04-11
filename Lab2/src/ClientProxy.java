@@ -3,7 +3,11 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Scanner;
+import java.util.logging.Filter;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Names George Yildiz, Fredrik Wallström
@@ -22,9 +26,11 @@ public class ClientProxy {
         String httpRequest = reformatHeader(request);
         InputStream is;
         int readBytes;
-        boolean isText = setContentType(request);
+
+        //boolean isText = setContentType(request);
 
       //send request to webserver
+
         try (Socket socket = new Socket(hostname, 80)){
             BufferedWriter bw;
             bw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
@@ -43,12 +49,57 @@ public class ClientProxy {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if(isText){
+       /* if(isText){
             if(!isContentValid(byteArray)){
                 byteArray  = newResponse(byteArray);
             }
+        }*/
+
+        if(!isContentValid(byteArray)){
+            System.out.println("bad content");
+            byteArray = newResponse(byteArray);
         }
         return byteArray;
+    }
+
+    private boolean isContentValid(ArrayList<byte[]> byteArray) {
+        StringBuilder sb = new StringBuilder();
+        for (byte[] br : byteArray){
+            sb.append(new String(br));
+        }
+        String httpResponse = sb.toString();
+       // System.out.println(httpResponse);
+/*
+        int startIndex = httpResponse.indexOf("Content-Type: ")+13;
+        int endIndex = 0;
+        for (int i = startIndex; i < httpResponse.length(); i++) {
+            String s = httpResponse.substring(i, i + 2);
+            if (s.equals("\r\n")) {
+                endIndex = i;
+                break;
+            }
+        }*/
+        boolean foundContent = false;
+        Scanner scanner = new Scanner(httpResponse);
+        while(scanner.hasNextLine()) {
+            String s = scanner.nextLine();
+            if(s.contains("Content-Type: ")){
+
+                if(s.contains("text") && !httpResponse.contains("Content-Encoding: ")){
+                //if(s.contains("text")){
+                return Filtering.isStringValid(httpResponse);
+                }else{
+                    break;
+                }
+            }
+        }
+        /*
+        if((httpResponse.substring(startIndex, endIndex)).contains("text")) {
+            if(!httpResponse.contains("Content-Encoding: ")){
+                return Filtering.isStringValid(httpResponse);
+            }
+        }*/
+        return true;
     }
 
     private ArrayList<byte[]> newResponse(ArrayList<byte[]> byteArray) {
@@ -116,7 +167,7 @@ public class ClientProxy {
         }
         return request;
     }
-
+/*
     public boolean isContentValid(ArrayList<byte[]> byteArray){
         StringBuilder sb = new StringBuilder();
         for (byte[] br : byteArray){
@@ -127,6 +178,6 @@ public class ClientProxy {
 //        s = s.substring(s.indexOf("\r\n\r\n"));;
         return Filtering.isStringValid(s);
         }
-
+*/
     }
 

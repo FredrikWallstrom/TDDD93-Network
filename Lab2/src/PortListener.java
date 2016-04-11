@@ -28,8 +28,6 @@ public class PortListener implements Runnable{
         new Thread(getInstance()).start();
     }
 
-
-
     public static PortListener getInstance() {
         if (INSTANCE == null){
             INSTANCE = new PortListener();
