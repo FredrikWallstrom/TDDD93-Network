@@ -15,7 +15,6 @@ public class FilteringTest {
     @Test
     public void testIsStringValid() throws Exception {
         for (int i = 0; i < s.length; i++) {
-            System.out.println(Filtering.isStringValid(s[i]));
             assert Filtering.isStringValid(s[i]) == answers[i];
         }
     }

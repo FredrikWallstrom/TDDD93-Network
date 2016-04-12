@@ -29,7 +29,7 @@ public class ServerProxy implements Runnable{
                         //see if it is end of request
                         if (stringLine.isEmpty()) {
                             ArrayList<byte[]> httpResponse = new ArrayList<>();
-                            //PortListener.LOGGER.log(Level.INFO, "This request is made = " + sb.toString());
+                            //PortListener.LOGGER.log(Level.INFO, "This request is made = " + "\n" + sb.toString());
                             if (!Filtering.isStringValid(getURL(sb.toString()))) {
                                 String redirect = "HTTP/1.1 302 Found\r\n" +
                                         "Location: http://www.ida.liu.se/~TDTS04/labs/2011/ass2/error1.html\r\n\r\n\r\n";
@@ -51,17 +51,17 @@ public class ServerProxy implements Runnable{
                                 httpResponse = formatHeader(tmp, connectionClosed);
                             }
 
-/*
-                            StringBuilder stringb = new StringBuilder();
+
+                            StringBuilder strb = new StringBuilder();
                             for (byte[] br : httpResponse) {
-                                stringb.append(new String(br));
+                                strb.append(new String(br));
                             }
-                            String s = stringb.toString();
-                            System.out.println(s);
-*/
+                            String s = strb.toString();
+
+
                             // response to client
                             OutputStream os = socket.getOutputStream();
-                            //PortListener.LOGGER.log(Level.INFO, "This response is made = " + httpResponse.toString());
+                           // PortListener.LOGGER.log(Level.INFO, "This response is made = " + "\n" + s);
                             for (byte[] br : httpResponse) {
                                 os.write(br);
                             }
@@ -72,19 +72,17 @@ public class ServerProxy implements Runnable{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        /*try {
+        try {
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
-        }*/
+        }
     }
 
     /*
     change header back to connection: keep alive
      */
     private ArrayList<byte[]> formatHeader(ArrayList<byte[]> httpResponse, boolean connectionClosed) throws UnsupportedEncodingException {
-        int startIndex;
-        int endIndex = -2;
         if(!connectionClosed){
 
             StringBuilder sb = new StringBuilder();
@@ -92,21 +90,7 @@ public class ServerProxy implements Runnable{
                 sb.append(new String(br, "ISO-8859-1"));
             }
             String s = sb.toString();
-            s = s.replaceFirst("Connection:(.*)", "Connection: keep-alive");
-            /*
-            startIndex = s.indexOf("Connection: ");
-            for (int i = startIndex; i < s.length(); i++) {
-                String tmpString = s.substring(i, i + 1);
-                if (tmpString.equals("\n")) {
-                    endIndex = i;
-                    break;
-                }
-
-            }
-
-            s = s.replaceFirst((s.substring(startIndex, endIndex)), "Connection: keep-alive");
-
-*/
+            s = s.replaceFirst("\\sConnection:(.*)", "\nConnection: keep-alive");
             byte br[] = s.getBytes("ISO-8859-1");
             httpResponse.clear();
             httpResponse.add(br);
