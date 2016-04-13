@@ -28,13 +28,13 @@ public class ServerProxy implements Runnable{
                         sb.append("\r\n");
                         //see if it is end of request
                         if (stringLine.isEmpty()) {
-                            ArrayList<byte[]> httpResponse = new ArrayList<>();
+                            byte httpResponse[];
                             //PortListener.LOGGER.log(Level.INFO, "This request is made = " + "\n" + sb.toString());
                             if (!Filtering.isStringValid(getURL(sb.toString()))) {
                                 String redirect = "HTTP/1.1 302 Found\r\n" +
                                         "Location: http://www.ida.liu.se/~TDTS04/labs/2011/ass2/error1.html\r\n\r\n\r\n";
-                                byte br[] = redirect.getBytes();
-                                httpResponse.add(br);
+                                httpResponse = redirect.getBytes();
+                                //httpResponse.add(br);
                             } else {
                                 // check if the connection is closed or not
                                 boolean connectionClosed = false;
@@ -43,28 +43,33 @@ public class ServerProxy implements Runnable{
                                 }
                                 //send request to client and let client talk to Webserver
                                 httpResponse = client.makeRequest(sb.toString());
+                               /*
                                 ArrayList<byte[]> tmp = new ArrayList<>();
                                 for (byte[] br : httpResponse) {
                                     tmp.add(br);
                                 }
                                 httpResponse.clear();
-                                httpResponse = formatHeader(tmp, connectionClosed);
+                                httpResponse = formatHeader(tmp, connectionClosed); */
                             }
 
 
+/*
                             StringBuilder strb = new StringBuilder();
                             for (byte[] br : httpResponse) {
                                 strb.append(new String(br));
                             }
                             String s = strb.toString();
-
+*/
+                            String s = new String(httpResponse);
+                            System.out.println(s+ "\n");
 
                             // response to client
                             OutputStream os = socket.getOutputStream();
                            // PortListener.LOGGER.log(Level.INFO, "This response is made = " + "\n" + s);
-                            for (byte[] br : httpResponse) {
+                     /*       for (byte[] br : httpResponse) {
                                 os.write(br);
-                            }
+                            }*/
+                            os.write(httpResponse);
                             os.flush();
                             sb.setLength(0);
                         }

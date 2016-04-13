@@ -16,13 +16,16 @@ public class ClientProxy {
     public ClientProxy() {
     }
 
-    public ArrayList<byte[]> makeRequest(String request) {
-        byte br[] = new byte[256];
+    public byte[] makeRequest(String request) {
+        byte br[];
         ArrayList<byte[]> byteArray = new ArrayList<>();
         String httpRequest = reformatHeader(request);
         InputStream is;
+        BufferedReader buffR;
         int readBytes;
-
+        StringBuilder sb = new StringBuilder();
+        String stringLine;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         //send request to webserver
 
         try (Socket socket = new Socket(hostname, 80)){
@@ -30,46 +33,68 @@ public class ClientProxy {
             bw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             bw.write(httpRequest);
             bw.flush();
-
             // wait for data
             is = socket.getInputStream();
-            readBytes = is.read(br, 0, 256);
-            while(readBytes != -1){
-                byte tmp[] = new byte[readBytes];
-                System.arraycopy(br, 0, tmp, 0, readBytes);
-                byteArray.add(tmp);
-                readBytes = is.read(br, 0, 256);
+
+            buffR = new BufferedReader(new InputStreamReader(is));
+            while ((stringLine = buffR.readLine()) != null) {
+                sb.append(stringLine);
+                sb.append("\r\n");
+                if(sb.toString().endsWith("\r\n\r\n")){
+                    break;
+                }
+            }
+            if(isFilteringNecessary(sb.toString())) {
+                System.out.println("filter nodvandigt\n");
+                bos.write(sb.toString().getBytes("ISO-8859-1"));
+
+                while((readBytes = buffR.read()) != -1){
+                    bos.write(readBytes);
+
+                }
+                br = bos.toByteArray();
+               // if(isContentValid(br)){
+                    return br;
+                //}
+            }else{
+                bos.write(sb.toString().getBytes("ISO-8859-1"));
+
+                System.out.println("ej nodvandigt\n");
+                while((readBytes = buffR.read()) != -1){
+                    bos.write(readBytes);
+                }
+                br = bos.toByteArray();
+                return br;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if(!isContentValid(byteArray)){
-        //    PortListener.LOGGER.log(Level.INFO, "This content had bad content " + "\n" );
-            byteArray = newResponse(byteArray);
-
-        }
-        return byteArray;
+        System.out.println("returnera noll\n");
+        return null;
     }
 
-    private boolean isContentValid(ArrayList<byte[]> byteArray) {
-        StringBuilder sb = new StringBuilder();
-        for (byte[] br : byteArray){
-            sb.append(new String(br));
-        }
-        String httpResponse = sb.toString();
-        Scanner scanner = new Scanner(httpResponse);
-        while(scanner.hasNextLine()) {
+    private boolean isFilteringNecessary(String httpHeader) {
+        Scanner scanner = new Scanner(httpHeader);
+        while (scanner.hasNextLine()) {
             String s = scanner.nextLine();
-            if(s.contains("Content-Type: ")){
-                if(s.contains("text") && !httpResponse.contains("Content-Encoding: ")){
-                    //PortListener.LOGGER.log(Level.INFO, "This response will be searched for keywords " + "\n" );
-                    return Filtering.isStringValid(httpResponse);
+            if (s.contains("Content-Type:")) {
+                if (s.contains("text") && !httpHeader.contains("Content-Encoding:")) {
+                    return true;
                 }else{
                     break;
                 }
             }
         }
-        return true;
+        return false;
+    }
+
+    private boolean isContentValid(byte[] br) {
+        StringBuilder sb = new StringBuilder();
+   //     for (byte[] br : byteArray){*/
+            String httpResponse = new String(br);
+        //}
+
+        return Filtering.isStringValid(httpResponse);
     }
 
     private ArrayList<byte[]> newResponse(ArrayList<byte[]> byteArray) {
@@ -84,8 +109,6 @@ public class ClientProxy {
 
     private String reformatHeader(String request) {
         int endIndex = 0;
-        System.out.println(request);
-        System.out.println("\n");
         int startIndex = request.indexOf(" ") + 1;
         int startOfHost = request.indexOf("//") + 2;
 
