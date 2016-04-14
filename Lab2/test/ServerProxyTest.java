@@ -14,7 +14,6 @@ public class ServerProxyTest {
     @org.junit.Before
     public void setUp() throws Exception {
         new Thread(PortListener.getInstance()).start();
-
     }
 
     @org.junit.After

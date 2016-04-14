@@ -9,9 +9,12 @@ public class FilteringTest {
                    "<p> SpongeBob is my hero! He is so yellow and soft. I just love him.</p> <p> " +
                    "A normal Web browser should be able to display this page just fine, " +
                    "but if you are running Net Ninny, this page should be blocked. " +
-                   "Hopefully, you will get the " + "<a href=./error2.html> inappropriate content error page</a> instead. </p> </body> </html>"};
+                   "Hopefully, you will get the " + "<a href=./error2.html> inappropriate content error page</a> instead. </p> </body> </html>",
+                     "http://corren.se/sok/?querystring=norrk%C3%B6ping&s=pubtime#query=norrk%C3%B6ping&page=0&sortBy=3"};
 
-    boolean answers[] = {true, false};
+    boolean answers[] = {true, false, false};
+
+
     @Test
     public void testIsStringValid() throws Exception {
         for (int i = 0; i < s.length; i++) {
