@@ -22,9 +22,8 @@ public class ClientProxyTest {
     @Test
     public void testMakeRequest() throws Exception {
         ClientProxy clientProxy = new ClientProxy();
-        StringBuilder sb = new StringBuilder();
         String s ="";
-        for (int i = 5; i < requests.length; i++) {
+        for (int i = 0; i < requests.length; i++) {
             byte[] br = clientProxy.makeRequest(requests[i]);
             s = new String(br);
            // System.out.println(s);

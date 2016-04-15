@@ -24,19 +24,23 @@ public class ServerProxy implements Runnable{
     /**
      *This method will handle requests from the client (webbrowser) and make sure it is a valid URL and
      * send it to the "client side" of proxy. In cases of invalid URL we will redirect to another page.
+     * Feature 3 is implemented in this method.
      */
     @Override
     public void run() {
+
         StringBuilder sb = new StringBuilder();
         try (BufferedReader buffReader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             String stringLine;
+            //socket.setSoTimeout(30000);
             while ((stringLine = buffReader.readLine()) != null) {
                 sb.append(stringLine);
                 sb.append("\r\n");
                 //see if it is end of request
                 if (stringLine.isEmpty()) {
                     byte httpResponse[];
-                    //PortListener.LOGGER.log(Level.INFO, "This request is made = " + "\n" + sb.toString());
+                    PortListener.LOGGER.log(Level.INFO, "This request is made = " + "\n" + sb.toString());
+                    //Feature 3
                     if (!Filtering.isStringValid(getURL(sb.toString()))) {
                         String redirect = "HTTP/1.1 302 Found\r\n" +
                                           "Location: http://www.ida.liu.se/~TDTS04/labs/2011/ass2/error1.html\r\n\r\n\r\n";
@@ -46,9 +50,7 @@ public class ServerProxy implements Runnable{
                         httpResponse = client.makeRequest(sb.toString());
                     }
 
-                    //String s = new String(httpResponse);
-                    // PortListener.LOGGER.log(Level.INFO, "This response is made = " + "\n" + s);
-
+                    PortListener.LOGGER.log(Level.INFO, "This response is made = " + "\n" + new String(httpResponse));
                     // response to client
                     OutputStream os = socket.getOutputStream();
                     os.write(httpResponse);

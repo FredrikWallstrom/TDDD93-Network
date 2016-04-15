@@ -13,6 +13,7 @@ import java.util.logging.Logger;
  */
 public class PortListener implements Runnable{
     public final static Logger LOGGER = Logger.getLogger("myLogger");
+
     private static PortListener INSTANCE = null;
     private static int port = 8080;
 
@@ -25,10 +26,11 @@ public class PortListener implements Runnable{
     /**
      * Main function that can start the listener that listens to request on a specific port.
      * Can be started with argument so user can choose port. If no arguments are given it listens to port 8080.
+     * Feature 7 is implemented in this method.
      * @param args
      */
     public static void main(String[] args) {
-
+        // Feature 7
         if (args.length >0) {
             port = Integer.parseInt(args[0]);
         }
@@ -43,6 +45,7 @@ public class PortListener implements Runnable{
         if (INSTANCE == null){
             INSTANCE = new PortListener();
         }
+        LOGGER.setLevel(Level.SEVERE);
         return INSTANCE;
     }
 
@@ -52,7 +55,7 @@ public class PortListener implements Runnable{
     @Override
     public void run() {
         try(ServerSocket listener = new ServerSocket(port)) {
-            LOGGER.log(Level.INFO, "listening to port number = " + port);
+            LOGGER.log(Level.SEVERE, "listening to port number = " + port);
             while (true) {
                 // waits for TCP connection
                 Socket socket = listener.accept();

@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="ArtifactManager">
+    <artifact type="jar" name="Lab2:jar">
+      <output-path>$PROJECT_DIR$/out/artifacts/Lab2_jar</output-path>
+      <root id="archive" name="Lab2.jar">
+        <element id="module-output" name="Lab2" />
+      </root>
+    </artifact>
+  </component>
   <component name="ClientPropertiesManager">
     <properties class="javax.swing.AbstractButton">
       <property name="hideActionText" class="java.lang.Boolean" />
@@ -1344,7 +1352,6 @@
   </component>
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Lab2.iml" filepath="$PROJECT_DIR$/Lab2.iml" />
       <module fileurl="file://$PROJECT_DIR$/Lab2.iml" filepath="$PROJECT_DIR$/Lab2.iml" />
     </modules>
   </component>

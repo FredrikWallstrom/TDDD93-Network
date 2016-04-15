@@ -36,6 +36,7 @@ public class ClientProxy {
         StringBuilder sb = new StringBuilder();
         String stringLine;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
         try (Socket socket = new Socket(hostname, 80)){
             BufferedWriter bw;
             bw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
@@ -77,6 +78,7 @@ public class ClientProxy {
      * This method will look through the Content-type field and eventuelly the Content-Encoding field in the Http-header.
      * Only if the value of the content-type is text and the Content-Encoding field is non-existence, will we consider it necessary
      * to filter the content.
+     * Feature 8 is implementen in this method.
      * @param httpHeader
      * @return true if filtering is necessary, otherwise false.
      */
@@ -134,9 +136,10 @@ public class ClientProxy {
             request = request.substring(0, request.length() - 2);
             request = request + "Host: " + hostname + "\r\n\r\n";
         }
+
         //change/add connection : close to header
-        if (request.contains("Connection:")) {
-            startIndex = request.indexOf("Connection: ");
+        if (request.contains("\nConnection:")) {
+            startIndex = request.indexOf("\nConnection: ")+1;
             for (int i = startIndex; i < request.length(); i++) {
                 String s = request.substring(i, i + 2);
                 if (s.equals("\r\n")) {
