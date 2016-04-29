@@ -1,7 +1,8 @@
 import javax.swing.*;
 import java.util.ArrayList;
 import java.lang.StringBuilder;
-import java.util.HashMap;        
+import java.util.HashMap;
+import java.util.Arrays;       
 
 public class RouterNode {
   private int myID;
@@ -23,10 +24,9 @@ public class RouterNode {
 		
 
 		//initialize neighbours and who routing is done via.
-		int[] neighboursCost = new int[RouterSimulator.NUM_NODES];
+		
 		for(int i = 0 ; i < costs.length; i++){
-			neighboursCost[i] = RouterSimulator.INFINITY;	
-			//TODO maybe need change after poissons
+		//TODO maybe need change after poissons
 			if (costs[i] < RouterSimulator.INFINITY){
 				routeThrough[i] = i;
 				if(i != myID){
@@ -38,6 +38,9 @@ public class RouterNode {
 		}
 		// initialize map for neighbours distance vectors
 		for(int key : neighbours.keySet()){
+			int[] neighboursCost = new int[RouterSimulator.NUM_NODES];
+			Arrays.fill(neighboursCost, RouterSimulator.INFINITY);
+			//neighboursCost[i] = RouterSimulator.INFINITY;	
 			neighboursDistVectors.put(key, neighboursCost);
 		}
 
@@ -48,42 +51,12 @@ public class RouterNode {
 		printDistanceTable();
 		
   }
-/*
-  //--------------------------------------------------
+
   public void recvUpdate(RouterPacket pkt) {
-		int[] neighboursCost = pkt.mincost;
+		int[] neighboursCost = new int[RouterSimulator.NUM_NODES]; // pkt.mincost;
+ 		System.arraycopy(pkt.mincost, 0, neighboursCost, 0, RouterSimulator.NUM_NODES);
 		neighboursDistVectors.put(pkt.sourceid, neighboursCost);
-		boolean update = false;
-		for(int i = 0; i <costs.length; i++){
-			if(neighboursCost[i] + costs[pkt.sourceid] < costs[i]){
-				costs[i] = neighboursCost[i] + costs[pkt.sourceid];
-				routeThrough[i] = routeThrough[pkt.sourceid]; 
-				update = true;
-			}
-		}
-		if(update){
-			notifyNeighbours();		
-		}
-		
-
-		
-  }
-
-*/
-  public void recvUpdate(RouterPacket pkt) {
-		int[] neighboursCost = pkt.mincost;
-		neighboursDistVectors.put(pkt.sourceid, neighboursCost);
-		boolean update = false;
-		for(int i = 0; i <costs.length; i++){
-			for(int nbr : neighbours.keySet()){ 
-				if(neighboursDistVectors.get(nbr)[i] + neighbours.get(nbr) < costs[i]){
-
-
-					costs[i] = neighboursDistVectors.get(nbr)[i] + neighbours.get(nbr);
-					routeThrough[i] = nbr; 
-					update = true;
-			}
-		}
+		boolean update = changeMinCost();
 		if(update){
 			notifyNeighbours();		
 		}
@@ -154,15 +127,43 @@ public class RouterNode {
 		}
 		myGUI.println(sb.toString());
 		myGUI.println(new String(new char[9+(i)*5]).replace("\0", "-"));
-	}				
+	}
 
-  
+	/**
+	 * changes costs if there is a cheaper path. Returns true if an update was made, otherwise false.
+	**/
+	private boolean changeMinCost(){
+		boolean update = false;
+		for(int i = 0; i <costs.length; i++){
+			for(int nbr : neighbours.keySet()){ 
+				//myGUI.println("grannen " + nbr + " till nod : " + i+ "är " + neighboursDistVectors.get(nbr)[i] + "vi " + myID + "till grannen : " + neighbours.get(nbr) + " och den nuvarande misnta kostnaden är " +  costs[i]);
+				if(neighboursDistVectors.get(nbr)[i] + neighbours.get(nbr) < costs[i]){
+					costs[i] = neighboursDistVectors.get(nbr)[i] + neighbours.get(nbr);
+					routeThrough[i] = nbr; 
+					update = true;
+				}
+			}
+		}
+		return update;
+	}				
 
   //--------------------------------------------------
   public void updateLinkCost(int dest, int newcost) {
-		int oldNeighbourValue = neighbours.get(dest);		
+		int oldNeighbourValue = neighbours.get(dest);	
+		int tmp = costs[dest];	
 		neighbours.put(dest, newcost);
-
-		notifyNeighbours();
-  }
+		boolean update = false;
+// update value if we route through the node that is our dest.
+		for(int i = 0; i<costs.length; i++){
+			if(routeThrough[i] == dest){
+				costs[i] += (newcost - oldNeighbourValue);
+				update = true;
+			}
+		}
+		//if(update){
+		if(update &&changeMinCost()){
+			notifyNeighbours();
+			//}			
+		}
+	}
 }
