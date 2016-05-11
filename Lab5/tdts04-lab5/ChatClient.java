@@ -59,21 +59,18 @@ public class ChatClient
 			input = System.console().readLine();
 			if(input.equals("quit")) break;
 			if(input.startsWith("join") && input.length() > 5){
-				boolean joined = chatImpl.join(cref, input.substring(5));
-				if(!joined){
-					System.out.println("Error: user " +  input.substring(5) + 
-					" already an active chatter or you are already active in the chat!");				
-				}		
+				chatImpl.join(cref, input.substring(5));		
 			}else if(input.equals("list")){
 				chatImpl.list(cref);
 			}else if(input.equals("leave")){
 				chatImpl.leave(cref);			
 			}else if(input.startsWith("post") && input.length() > 5){
 				chatImpl.post(cref, input.substring(5));		
-			}
-					
+			}else if(input.startsWith("play") && input.length() == 6 &&
+				(input.charAt(5) == 'x' || input.charAt(5) == 'o')){
+				chatImpl.playGame(cref, input.charAt(5));
+			}	
 		}
-		
 
 	    String chat = chatImpl.say(cref, "\n  Hello....");
 	    System.out.println(chat);

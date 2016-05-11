@@ -8,12 +8,16 @@ import org.omg.PortableServer.POA;
 import java.util.Map;
 import java.util.HashMap;
 import java.lang.StringBuilder;
+
  
 class ChatImpl extends ChatPOA
 {
-    private ORB orb;
-	private HashMap<String, ChatCallback> activeUsers = new HashMap();
+	private static final int BOARDSIZE = 9;
 
+    private ORB orb;
+	private HashMap<String, Character> activePlayers = new HashMap();
+	private HashMap<String, ChatCallback> activeUsers = new HashMap();
+	private char[][] board = new char[BOARDSIZE][BOARDSIZE];
     public void setORB(ORB orb_val) {
         orb = orb_val;
     }
@@ -24,15 +28,15 @@ class ChatImpl extends ChatPOA
         return ("         ....Goodbye!\n");
     }
 
-	public boolean join(ChatCallback callobj, String username) {
+	public void join(ChatCallback callobj, String username) {
 		if(activeUsers.containsKey(username) || activeUsers.containsValue(callobj)) {
-			return false;		
+			callobj.callback("Error: user " + username + 
+					" already an active chatter or you are already active in the");		
 		}else{
 			activeUsers.put(username, callobj);
 			notifyActiveUsers(callobj, username + " joined");
 			callobj.callback("Welcome " + username);	 
-		}
-		return true;			
+		}			
 	} 
 	
 	public void list(ChatCallback callobj){
@@ -45,24 +49,37 @@ class ChatImpl extends ChatPOA
 	}
 
 	public void post(ChatCallback callobj, String msg){
-		for(Map.Entry<String, ChatCallback> entry : activeUsers.entrySet()){
-			if(entry.getValue().equals(callobj)){
-				notifyActiveUsers(null, entry.getKey() + " said: " + msg);
-			}
+		String user = getUserName(callobj);
+		if(user != null){
+			notifyActiveUsers(null, user + " said: " + msg);
 		}
 	}
 	
 	public void leave(ChatCallback callobj){
-		String userToLeave = null;		
-		for(Map.Entry<String, ChatCallback> entry : activeUsers.entrySet()){
-			if(entry.getValue().equals(callobj)){
-				userToLeave = entry.getKey();
-				notifyActiveUsers(callobj, userToLeave + " left");								
-				activeUsers.remove(userToLeave);
-				break;											
-			}		
-		}	
-		callobj.callback("Goodbye " + userToLeave);					
+		String userToLeave = getUserName(callobj);
+		if(userToLeave != null){
+			notifyActiveUsers(callobj, userToLeave + " left");								
+			activeUsers.remove(userToLeave);
+			//TODO kolla att leave tar ut fran active players genom att joina ett spel sen ga ut och kolla att 
+			//spelaren inte ar kvar nar vinnarna presenteras
+			if(activePlayers.containsKey(userToLeave)){
+				activePlayers.remove(userToLeave);
+			}
+			callobj.callback("Goodbye " + userToLeave);													
+		}						
+	}
+
+	public void playGame(ChatCallback callobj, char pieceType){
+		String user = getUserName(callobj);
+		if(user == null || activePlayers.containsKey(user)) return;	
+		if(activePlayers.isEmpty()) initializeBoard();
+
+		activePlayers.put(user, new Character(pieceType));
+		String boardAsText = convertBoardToText();
+		callobj.callback(boardAsText);
+		
+
+
 	}
 	
 	private void notifyActiveUsers(ChatCallback callobjToIgnore, String msg){
@@ -71,6 +88,41 @@ class ChatImpl extends ChatPOA
 				callobjRef.callback(msg);
 			}
 		}
+	}
+
+	private String getUserName(ChatCallback callobj){
+		for(Map.Entry<String, ChatCallback> entry : activeUsers.entrySet()){
+			if(entry.getValue().equals(callobj)){
+				return entry.getKey();
+			}
+		}
+		return null;
+	}
+
+	private void initializeBoard(){
+		for(int row = 0; row < BOARDSIZE; row++){
+			for(int col = 0; col < BOARDSIZE; col++){
+				board[row][col] = '-';
+			}
+		}
+	}
+
+	private String convertBoardToText(){
+		StringBuilder sb = new StringBuilder();
+		sb.append(" ");
+		for(int i = 0; i < BOARDSIZE; i++){
+			sb.append("  ").append(i);
+		}
+		//sb.append("\n");
+		for(int row = 0; row < BOARDSIZE; row++){
+			sb.append("\n");		
+			sb.append(row).append("  ");				
+			for(int col = 0; col < BOARDSIZE; col++){
+				sb.append(board[row][col]).append("  ");
+			}
+		
+		}
+		return sb.toString();
 	}
 }
 
