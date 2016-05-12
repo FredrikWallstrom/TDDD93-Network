@@ -18,6 +18,9 @@ class ChatImpl extends ChatPOA
 	private HashMap<String, Character> activePlayers = new HashMap();
 	private HashMap<String, ChatCallback> activeUsers = new HashMap();
 	private char[][] board = new char[BOARDSIZE][BOARDSIZE];
+	/**
+	* BoardCounter to keep track of when the game board is full.
+	*/
 	private int boardCounter = BOARDSIZE*BOARDSIZE;
 
     public void setORB(ORB orb_val) {
@@ -30,10 +33,15 @@ class ChatImpl extends ChatPOA
         return ("         ....Goodbye!\n");
     }
 
+    /**
+    * Check if the user is active in the chat or in the client. 
+    * If the user is not active, add the user to the list of activated user 
+    * and notify all activated users.
+    */
 	public void join(ChatCallback callobj, String username) {
 		if(activeUsers.containsKey(username) || activeUsers.containsValue(callobj)) {
 			callobj.callback("Error: user " + username + 
-					" already an active chatter or you are already active in the");		
+					" already an active chatter or you are already active in the client");		
 		}else{
 			activeUsers.put(username, callobj);
 			notifyActiveUsers(callobj, username + " joined");
@@ -41,6 +49,9 @@ class ChatImpl extends ChatPOA
 		}			
 	} 
 	
+	/**
+	* Present a list of the users that are activated in the chat.
+	*/
 	public void list(ChatCallback callobj){
 		StringBuilder list = new StringBuilder();
 		list.append("List of registered users:");
@@ -50,6 +61,10 @@ class ChatImpl extends ChatPOA
 		callobj.callback(list.toString());
 	}
 
+	/**
+	* Check if user is activate in the chat and send his message to all
+	* activated users if so is the case.
+	*/
 	public void post(ChatCallback callobj, String msg){
 		String user = getUserName(callobj);
 		if(user != null){
@@ -57,6 +72,11 @@ class ChatImpl extends ChatPOA
 		}
 	}
 	
+	/**
+	* Check if the user is in the chat, remove user from the active list and '
+	* and notify all activated user about that. Also check if the user is 
+	* playing five-in-a-row, if so, remove user from player list.
+	*/
 	public void leave(ChatCallback callobj){
 		String userToLeave = getUserName(callobj);
 		if(userToLeave != null){
@@ -69,6 +89,10 @@ class ChatImpl extends ChatPOA
 		}						
 	}
 
+	/**
+	* Check if the user is a game, if so, remove user from the game (
+	* (player list) and and notify all players about that. 
+	*/
 	public void leaveGame(ChatCallback callobj){
 		String user = getUserName(callobj);
 		if(activePlayers.containsKey(user)){
@@ -77,6 +101,11 @@ class ChatImpl extends ChatPOA
 		}
 	}
 
+	/**
+	* If the user is not already in the game, add the user to player list.
+	* Broadcast that to all players and display the Game info and board for
+	* the new player.
+	*/
 	public void playGame(ChatCallback callobj, char pieceType){
 		String user = getUserName(callobj);
 		if(user == null || activePlayers.containsKey(user)) return;	
@@ -89,6 +118,9 @@ class ChatImpl extends ChatPOA
 		callobj.callback(boardAsText);
 	}
 
+	/**
+	* Help function that will display the game info for a new player.
+	*/
 	private void displayGameInstructions(ChatCallback callobj){
 		String instructions = "---------\nGAME INSTRUCTIONS\n---------\n" + 
 			"COMMANDS:\n" + 
@@ -99,10 +131,16 @@ class ChatImpl extends ChatPOA
 			callobj.callback(instructions);
 	}
 
+	/**
+	* This function will place a piece on the board by first check if the
+	* user is OK and then check if the format and position is valid.
+	* It will then place the new piece in the board and broadcast the update.
+	*/
 	public void placePiece(ChatCallback callobj, String positions){
 		String user = getUserName(callobj);
 		if(user == null || !activePlayers.containsKey(user)) return;	
 
+		// Check if the format of positions is valid.
 		String[] data = positions.split(",");
 		if(data.length != 2){
 			callobj.callback("Error: Input format is invalid. It should be of form x,y");
@@ -131,13 +169,20 @@ class ChatImpl extends ChatPOA
 		}
 	}
 	
-
+	/**
+	* This function will just represent a new game for the players.
+	*/
 	private void startNewGame(){
 		initializeBoard();
 		String boardAsText = convertBoardToText();
 		broadcastToPlayers(boardAsText);
 	}
 
+	/**
+	* This function will present the winners for the active players.
+	* It will go through the player list and check for the user that have
+	* won the game.
+	*/
 	private void presentWinners(Character team){
 		StringBuilder sb = new StringBuilder();
 		sb.append("The Winners are team " + team + ": \n");
@@ -150,17 +195,26 @@ class ChatImpl extends ChatPOA
 		broadcastToPlayers(sb.toString());
 	}
 
+	/**
+	* This function will iterate over the specified directions and check
+	* if there is a team that have won or not.
+	* Return true if we have a winner, otherwise false.
+	*/
 	private boolean gameOver(int row, int col, String user){
 		char team = new Character(activePlayers.get(user));
-
 		for(Directions direction: Directions.values()){
 			boolean winner = fiveInARow(row, col, direction, team);
 			if(winner) return true;
 		}
-
 		return false;
 	}
 
+	/**
+	* Helpfunction for the gameOver function. This function will step in a
+	* given direction (come from argument) and check if there is five "x" or 
+	* "o" in a serie with a starting point of previous placed mark.
+	* If so is the case, function will return true, otherwise false.
+	*/
 	private boolean fiveInARow(int row, int col, 
 		Directions direction, char team){
 		int count = 1;
@@ -179,7 +233,7 @@ class ChatImpl extends ChatPOA
 				if(count == 5) return true;
 			
 			}
-			// Change to opposite direction.
+			// Go to starting point again, Change to opposite direction.
 			row = initialRow;
 			col = initialCol;
 			stepRow = stepRow*(-1);
@@ -194,6 +248,11 @@ class ChatImpl extends ChatPOA
 		}
 	}
 	
+	/**
+	* This function will check if the given position is valid or not
+	* by check if the coordinates is out of the boardsize and if the position
+	* is empty (indicated with "-").
+	*/
 	private boolean isPositionValid(int row, int col, ChatCallback callobj){
 		if((row >= BOARDSIZE || row < 0) || (col >= BOARDSIZE || row < 0)){
 			callobj.callback("Error: Input position is not valid. Input position should be between 0 and " + (BOARDSIZE - 1));
@@ -205,6 +264,7 @@ class ChatImpl extends ChatPOA
 		}
 		return true;
 	}
+
 	private void notifyActiveUsers(ChatCallback callobjToIgnore, String msg){
 		for(ChatCallback callobj : activeUsers.values()){
 			if (!callobj.equals(callobjToIgnore)){
@@ -213,6 +273,10 @@ class ChatImpl extends ChatPOA
 		}
 	}
 
+	/**
+	* Iterate over the entry of activate user list. If the is in the chat,
+	* return the username. Else, return null.
+	*/
 	private String getUserName(ChatCallback callobj){
 		for(Map.Entry<String, ChatCallback> entry : activeUsers.entrySet()){
 			if(entry.getValue().equals(callobj)){
@@ -222,6 +286,9 @@ class ChatImpl extends ChatPOA
 		return null;
 	}
 
+	/**
+	* Set all position in board to empty.
+	*/
 	private void initializeBoard(){
 		for(int row = 0; row < BOARDSIZE; row++){
 			for(int col = 0; col < BOARDSIZE; col++){
@@ -230,12 +297,19 @@ class ChatImpl extends ChatPOA
 		}
 	}
 
+	/**
+	* This function will convert the board to a string by go through the
+	* board and append the markers to the string.
+	* Return the board as a string.
+	*/
 	private String convertBoardToText(){
 		StringBuilder sb = new StringBuilder();
 		sb.append(" ");
+		// First append a row with only numbers displaying the columns.
 		for(int i = 0; i < BOARDSIZE; i++){
 			sb.append("  ").append(i);
 		}
+
 		for(int row = 0; row < BOARDSIZE; row++){
 			sb.append("\n");		
 			sb.append(row).append("  ");				
