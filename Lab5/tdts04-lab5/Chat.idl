@@ -9,7 +9,8 @@ module ChatApp {
 			void post(in ChatCallback objref, in string message);
 			void leave(in ChatCallback objref);
 			void playGame(in ChatCallback objref, in char pieceType);
-			
+			void placePiece(in ChatCallback objref, in string positions);
+			void leaveGame(in ChatCallback objref);
 
    };
 };

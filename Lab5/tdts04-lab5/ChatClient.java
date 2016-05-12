@@ -69,7 +69,11 @@ public class ChatClient
 			}else if(input.startsWith("play") && input.length() == 6 &&
 				(input.charAt(5) == 'x' || input.charAt(5) == 'o')){
 				chatImpl.playGame(cref, input.charAt(5));
-			}	
+			}else if(input.startsWith("place") && input.length() >= 9){
+				chatImpl.placePiece(cref, input.substring(6));
+			}else if(input.equals("leave game")){
+				chatImpl.leaveGame(cref);
+			}
 		}
 
 	    String chat = chatImpl.say(cref, "\n  Hello....");
