@@ -58,7 +58,7 @@ public class ChatClient
 		while(true){
 			input = System.console().readLine();
 			if(input.equals("quit")) break;
-			if(input.startsWith("join") && input.length() > 5){
+			else if(input.startsWith("join") && input.length() > 5){
 				chatImpl.join(cref, input.substring(5));		
 			}else if(input.equals("list")){
 				chatImpl.list(cref);
@@ -73,6 +73,8 @@ public class ChatClient
 				chatImpl.placePiece(cref, input.substring(6));
 			}else if(input.equals("leave game")){
 				chatImpl.leaveGame(cref);
+			}else{
+				System.out.println("Command not recognized");
 			}
 		}
 

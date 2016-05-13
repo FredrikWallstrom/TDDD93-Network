@@ -139,15 +139,20 @@ class ChatImpl extends ChatPOA
 	public void placePiece(ChatCallback callobj, String positions){
 		String user = getUserName(callobj);
 		if(user == null || !activePlayers.containsKey(user)) return;	
-
+		int row;
+		int col;
 		// Check if the format of positions is valid.
-		String[] data = positions.split(",");
-		if(data.length != 2){
-			callobj.callback("Error: Input format is invalid. It should be of form x,y");
-			return;
+		try{
+
+			String[] data = positions.split(",");
+			//if(data.length != 2){
+			//}
+			row = Integer.parseInt(data[0]);
+			col = Integer.parseInt(data[1]);
+		}catch(Exception e){
+				callobj.callback("Error: Input format is invalid. It should be of form x,y");
+				return;
 		}
-		int row = Integer.parseInt(data[0]);
-		int col = Integer.parseInt(data[1]);
 
 		if(isPositionValid(row, col, callobj)){
 			boardCounter--;
