@@ -57,8 +57,10 @@ public class ChatClient
 		String input; 
 		while(true){
 			input = System.console().readLine();
-			if(input.equals("quit")) break;
-			else if(input.startsWith("join") && input.length() > 5){
+			if(input.equals("quit")) {
+				chatImpl.leave(cref);
+				break;
+			}else if(input.startsWith("join") && input.length() > 5){
 				chatImpl.join(cref, input.substring(5));		
 			}else if(input.equals("list")){
 				chatImpl.list(cref);
@@ -77,9 +79,6 @@ public class ChatClient
 				System.out.println("Command not recognized");
 			}
 		}
-
-	    String chat = chatImpl.say(cref, "\n  Hello....");
-	    System.out.println(chat);
 	    
 	} catch(Exception e){
 	    System.out.println("ERROR : " + e);

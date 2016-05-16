@@ -35,7 +35,7 @@ class ChatImpl extends ChatPOA
 
     /**
     * Check if the user is active in the chat or in the client. 
-    * If the user is not active, add the user to the list of activated user 
+    * If the user is not active, add the user to the list of activated users 
     * and notify all activated users.
     */
 	public void join(ChatCallback callobj, String username) {
@@ -62,7 +62,7 @@ class ChatImpl extends ChatPOA
 	}
 
 	/**
-	* Check if user is activate in the chat and send his message to all
+	* Check if user is active in the chat and send his message to all
 	* activated users if so is the case.
 	*/
 	public void post(ChatCallback callobj, String msg){
@@ -85,12 +85,12 @@ class ChatImpl extends ChatPOA
 			if(activePlayers.containsKey(userToLeave)){
 				activePlayers.remove(userToLeave);
 			}
-			callobj.callback("Goodbye " + userToLeave);													
+			callobj.callback("Goodbye " + userToLeave);				
 		}						
 	}
 
 	/**
-	* Check if the user is a game, if so, remove user from the game (
+	* Check if the user is in a game, if so, remove user from the game
 	* (player list) and and notify all players about that. 
 	*/
 	public void leaveGame(ChatCallback callobj){
@@ -145,8 +145,6 @@ class ChatImpl extends ChatPOA
 		try{
 
 			String[] data = positions.split(",");
-			//if(data.length != 2){
-			//}
 			row = Integer.parseInt(data[0]);
 			col = Integer.parseInt(data[1]);
 		}catch(Exception e){
